@@ -6,6 +6,7 @@ package datos;
 
 import java.util.Date;
 import java.util.LinkedList;
+import negocio.Constantes;
 
 /**
  *
@@ -82,4 +83,23 @@ public class DInventario {
         }
         return i;
      }
+    
+     public String reporte(String user , String pass){
+        String query = "select * from inventario_reporte('" +user+ "','" + pass +"');";
+        String resul="";
+         System.out.println(query);
+        try {
+            LinkedList<String> titulos = new LinkedList<>();
+            titulos.add("NOMBRE");
+            titulos.add("CODIGO");
+            titulos.add("STOCK");
+            titulos.add("CANTIDAD");
+            titulos.add("TIPO");
+            titulos.add("FECHA");
+            resul = Constantes.HTML(titulos, con.list(query,6));
+        } catch (Exception e) {
+            System.out.println("error : " + e.toString());
+        }
+        return "<h2>REPORTE DE INVENTARIO INGRESO Y EGRESO DE PRODUCTOS</h2> <br>"+ resul;
+    }
 }

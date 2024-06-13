@@ -132,4 +132,20 @@ public class DProducto {
         }
         return i;
     }
+    
+        public String estadisticas(String user , String pass){
+        String query = "select * from producto_estadistica('" +user+ "','" + pass +"');";
+        String resul="";
+         System.out.println(query);
+        try {
+            LinkedList<String> titulos = new LinkedList<>();
+            titulos.add("NOMBRE");
+            titulos.add("CODIGO");
+            titulos.add("CANTIDAD VENDIDA");
+            resul = Constantes.HTML(titulos, con.list(query,3));
+        } catch (Exception e) {
+            System.out.println("error : " + e.toString());
+        }
+        return "<h2>ESTADISTICAS DE PRODUCTOS MAS VENDIDOS</h2> <br>"+ resul;
+    }
 }

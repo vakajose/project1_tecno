@@ -4,7 +4,7 @@
  */
 package negocio;
 
-import datos.DInventario;
+import datos.DVenta;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
@@ -12,33 +12,29 @@ import java.util.ArrayList;
  *
  * @author cmroj
  */
-public class NInventario {
-    private DInventario datos;
+public class NVenta {
+    private DVenta datos;
     SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
     
-    public NInventario() {
-        datos = new DInventario();
+    public NVenta() {
+        datos = new DVenta();
     } 
-    
-    
     public int insertar(String contenido){
-        int idinventario = -2;
+        int idventa = -2;
         try {
             ArrayList<String> lista = Constantes.getContenido(contenido);
             String user =lista.get(lista.size()-2);
             String pass =lista.get(lista.size()-1);
-            datos.setFecha(formatter.parse(lista.get(0)));
-            String tipo = lista.get(1);
-            idinventario = datos.insertar(user,pass);
-            if (idinventario > 0) {
-                lista.remove(0);
+            datos.setIdusuario(Integer.valueOf(lista.get(0)));
+            idventa = datos.insertar(user,pass);
+            if (idventa > 0) {
                 lista.remove(0);
                 lista.remove(lista.size()-1);
                 lista.remove(lista.size()-1);
 
                 for (int i = 0; i < lista.size(); i++) {
-                    datos.detalle(idinventario,Integer.valueOf(lista.get(i)),Integer.valueOf(lista.get(i+1)),Integer.valueOf(lista.get(i+2)),tipo);
-                    i=i+2;
+                    datos.detalle(idventa,Integer.valueOf(lista.get(i)),Integer.valueOf(lista.get(i+1)));
+                    i=i+1;
                 }
             } else {
                 return -2;
@@ -46,9 +42,14 @@ public class NInventario {
         } catch (Exception e) {
             return -2;
         }
-       return idinventario;
+       return idventa;
     }
-       public String reporte(String contenido){
+  
+  public String mostrar(String contenido){
+       ArrayList<String> lista = Constantes.getContenido(contenido);
+       return datos.mostrar(lista.get(0),lista.get(1));
+    }
+     public String reporte(String contenido){
        ArrayList<String> lista = Constantes.getContenido(contenido);
        return datos.reporte(lista.get(0),lista.get(1));
     }

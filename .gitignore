@@ -2,12 +2,12 @@
 # Created by https://www.gitignore.io/api/netbeans
 
 ### NetBeans ###
-.svn/
-**/nbproject/private/
-**/nbproject/Makefile-*.mk
-**/nbproject/Package-*.bash
+nbproject/
+lib/
+test/
 build/
 nbbuild/
 dist/
 nbdist/
+nbactions.xml
 .nb-gradle/

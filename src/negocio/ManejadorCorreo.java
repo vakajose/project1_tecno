@@ -18,8 +18,8 @@ public class ManejadorCorreo {
     private NPromocion promocion;
     private NInventario inventario;
     private NReserva reserva;
-    
-    
+    private NVenta venta;
+    private NPago pago;
     
     public correo clienteSmtp;
 
@@ -32,7 +32,8 @@ public class ManejadorCorreo {
         promocion = new NPromocion();
         inventario = new NInventario();
         reserva = new NReserva();
-                
+        venta = new NVenta();
+        pago = new NPago();
     }
 
     public void procesarCorreo(ArrayList<String> lista) throws MessagingException {
@@ -133,21 +134,17 @@ public class ManejadorCorreo {
     private void Reporte(String tabla, String cont) throws MessagingException {
        String lista="";
         
-      /*  if(tabla.equals("Pagos")){
-            lista = pago.Reporte(cont);
+        if(tabla.equals("Venta")){
+            lista = venta.reporte(cont);
         }
-        if(tabla.equals("Emergencias")){
-            lista = emergencia.Reporte(cont);
+        if(tabla.equals("Inventario")){
+            lista = inventario.reporte(cont);
         }
-       
-        if(tabla.equals("Cortes")){
-            lista = cortes.Reporte(cont);
-        }*/
-        
+   
         if(!lista.equals("")){
-          clienteSmtp.enviar_email(this.from,"Lista de datos" ,lista);
+          clienteSmtp.enviar_email(this.from,"RESPUESTA" ,lista);
         }else{
-          clienteSmtp.enviar_email(this.from, "ERROR EN REGISTRO", "Verifique el contendio y consulte ayuda");
+          clienteSmtp.enviar_email(this.from, "RESPUESTA", "Verifique el contendio y consulte ayuda");
         }
     }
 
@@ -160,8 +157,8 @@ public class ManejadorCorreo {
             case "Promocion" : i = promocion.insertar(contenido);break;
             case "Inventario" : i = inventario.insertar(contenido);break;
             case "Reserva" : i = reserva.insertar(contenido);break;
-            
-         
+            case "Venta" : i= venta.insertar(contenido);break;
+            case "Pago" : i= pago.insertar(contenido);break;
         }
 
         if(i>0){
@@ -190,6 +187,7 @@ public class ManejadorCorreo {
              case "Usuario":  i = usuarios.modificar(contenido); break;
              case "Producto":  i = producto.modificar(contenido); break;
              case "Promocion":  i = promocion.modificar(contenido); break;
+             case "Pago":  i = pago.modificar(contenido); break;
          }
 
         if(i>0){
@@ -217,6 +215,7 @@ public class ManejadorCorreo {
            case "Usuario": i = usuarios.eliminar(contenido); break;
            case "Producto": i = producto.eliminar(contenido); break;
            case "Promocion": i = promocion.eliminar(contenido); break;
+           case "Pago": i = pago.eliminar(contenido); break;
        } 
         if(i>0){
           clienteSmtp.enviar_email(this.from, "RESPUESTA",tabla+ " SE ELIMINO CORRECTAMENTE");
@@ -240,7 +239,8 @@ public class ManejadorCorreo {
            case "Producto" : lista = producto.mostrar(cont);break;
            case "Promocion" : lista = promocion.mostrar(cont);break;
            case "Reserva" : lista = reserva.mostrar(cont);break;
-           
+           case "Venta" : lista = venta.mostrar(cont);break;
+           case "Pago" : lista = pago.mostrar(cont);break;
        }
  
         if(!lista.equals("")){
@@ -251,33 +251,19 @@ public class ManejadorCorreo {
         
     }
     
-     private void Clasificar(String tabla , String cont) throws MessagingException {
-       String lista="";
-       switch (cont){
-          // case "Cliente" : lista = cliente.clsificar();break;
-           //case "Producto" : lista = producto.clasificar();break;
-          
-       }
- 
-        if(!lista.equals("")){
-          clienteSmtp.enviar_email(this.from, "",lista);
-        }else{
-          clienteSmtp.enviar_email(this.from, "ERROR EN REGISTRO", "Verifique el contendio y consulte ayuda");
-        }
-        
-    }
+   
      
       private void Estadisticas(String tabla , String cont) throws MessagingException {
        String lista="";
        switch (tabla){
-         //  case "Medicion" : lista = medicion.estadisticas(cont);break;
+          case "Producto" : lista = producto.estadisticas(cont);break;
           
        }
  
         if(!lista.equals("")){
-          clienteSmtp.enviar_email(this.from, "",lista);
+          clienteSmtp.enviar_email(this.from, "RESPUESTA",lista);
         }else{
-          clienteSmtp.enviar_email(this.from, "ERROR", "Verifique el contendio y consulte ayuda");
+          clienteSmtp.enviar_email(this.from, "RESPUESTA", "Verifique el contendio y consulte ayuda");
         }
         
     }

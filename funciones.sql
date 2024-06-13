@@ -247,7 +247,7 @@ $$
 	pid integer;
 begin
   if (select count(*) from usuario u where u.user = puser and u.pass = ppass  ) > 0 then
-	     insert into reserva(numero,fecha,total,idusuario) values((select count(*) from inventario)+1,current_date,0,(select u.id from usuario u where u.user= puser and u.pass = ppass)) returning id into pid;
+	     insert into reserva(numero,fecha,total,idusuario) values((select count(*) from reserva)+1,current_date,0,(select u.id from usuario u where u.user= puser and u.pass = ppass)) returning id into pid;
 		 return pid;
 	else 
 	return -1;  
@@ -291,7 +291,179 @@ end;
 $$
 language plpgsql;
 
+-------------venta ----------
+select * from venta;
 
+create or replace function venta_insertar(pidcliente integer ,puser varchar,ppass varchar)
+returns integer as
+$$
+	declare 
+	pid integer;
+begin
+  if (select count(*) from usuario u where u.user = puser and u.pass = ppass  ) > 0 then
+	     insert into venta(numero,fecha,total,idusuario) values((select count(*)  from venta)+1,current_date,0,pidcliente) returning id into pid;
+		 return pid;
+	else 
+	return -1;  
+   end if;
+end;
+$$
+language plpgsql;
+
+CREATE OR REPLACE FUNCTION detalleventa_actualizarTotal()
+RETURNS trigger AS
+$$
+declare 
+	cant integer;
+BEGIN
+   update venta set total = total + (new.cantidad*new.precio) where id = new.idventa;
+   return null;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
+
+CREATE TRIGGER trigger_detalleventa_actualizarTotal
+AFTER INSERT ON detallereserva
+FOR EACH ROW EXECUTE PROCEDURE detalleventa_actualizarTotal();
+
+
+create or replace function venta_mostrar(puser varchar,ppass varchar)
+returns table(numero varchar,fecha date,total numeric,producto varchar,cantidad integer,precio numeric,usuario varchar) as
+$$
+begin
+	if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+		return query (
+			select v.numero,v.fecha,v.total,p.nombre,d.cantidad,d.precio,u.nombre from venta v , detalleventa d , producto p  ,usuario u
+			where v.id = d.idventa and d.idproducto = p.id  and u.id = v.idusuario
+		);
+	else
+	return query (  
+			select v.numero,v.fecha,v.total,p.nombre,d.cantidad,d.precio,u.nombre from venta v , detalleventa d , producto p  ,usuario u
+			where v.id = d.idventa and d.idproducto = p.id  and u.id = v.idusuario and u.user = puser and u.pass = ppass
+		);
+	end if;
+end;
+$$
+language plpgsql;
+
+---------- pago ---------------------------
+
+select * from pago;
+
+create or replace function pago_insertar(ptotal numeric,pidventa integer,puser varchar,ppass varchar)
+returns integer as
+$$
+declare 
+	pid integer;
+begin
+	if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+			insert into pago(fecha,total,idventa) values(current_date,ptotal,pidventa) returning id into pid;
+		    return pid;
+	else
+		return -1;
+   end if;
+end;
+$$
+language plpgsql;
+
+create or replace function pago_mostrar(puser varchar,ppass varchar)
+returns table(id integer,fecha date,total numeric,venta varchar,usuario varchar) as
+$$
+begin
+	if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+		return query (
+			 select p.id , p.fecha ,p.total , v.numero , u.nombre from pago p, venta v, usuario u 
+	         where u.id = v.idusuario and p.idventa = v.id 
+		);
+	else
+	return query (  
+			 select p.id , p.fecha ,p.total , v.numero , u.nombre from pago p, venta v, usuario u 
+	          where u.id = v.idusuario and p.idventa = v.id and u.user = puser and u.pass = ppass
+		);
+	end if;
+end;
+$$
+language plpgsql;
+
+create or replace function pago_modificar(pid integer,ptotal numeric,pidventa integer,puser varchar,ppass varchar)
+returns integer as
+$$
+begin
+  if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+			update pago set total = ptotal , idventa = pidventa , fecha = current_date 
+			where id = pid ;
+		    return pid;
+	else
+		return -1;
+   end if;
+end;
+$$
+language plpgsql;
+
+create or replace function pago_eliminar(pid integer,puser varchar,ppass varchar)
+returns integer as
+$$
+begin
+    if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+			delete from pago where id = pid ;
+		    return pid;
+	else
+		return -1;
+   end if;
+end;
+$$
+language plpgsql;
+
+-------- reportes ------
+create or replace function venta_reporte(puser varchar,ppass varchar)
+returns table(numero varchar,fecha date , total numeric,cliente varchar,estado text) as
+$$
+begin
+	   if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+			return query (
+	 		select v.numero,v.fecha ,v.total , u.nombre , case when  (select count(*) from pago p where p.idventa =v.id ) > 0 then 'Pagado' else 'No Pagado' end from venta v, usuario u  
+			where  v.idusuario = u.id 
+			);
+	  end if;
+end;
+$$
+language plpgsql;
+
+
+create or replace function inventario_reporte(puser varchar,ppass varchar)
+returns table(nombre varchar,codigo varchar , stock integer,cantidad integer,tipo varchar,fecha date) as
+$$
+begin
+	   if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+			return query (
+	 		   select p.nombre,p.codigo,p.cantidad ,i.cantidad,i.tipo , (select iv.fecha from inventario iv where iv.id = i.idinventario limit 1)  from producto p , ingresoegreso i 
+			 where  i.idproducto = p.id
+			);
+	  end if;
+end;
+$$
+language plpgsql;
+
+
+
+------------- estadisticas -----------
+create or replace function producto_estadistica(puser varchar,ppass varchar)
+returns table(nombre varchar,codigo varchar , vendido bigint) as
+$$
+begin
+	   if (select u.tipo from usuario u where u.user = puser and u.pass =ppass ) = 'Administrador' then 
+			return query (
+	 		   select p.nombre , p.codigo , (select sum(d.cantidad) from detalleventa d where d.idproducto = p.id) as vendidos  from producto p
+				order by vendidos desc
+			);
+	  end if;
+end;
+$$
+language plpgsql;
+
+
+
+ 
 
 
 
